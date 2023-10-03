@@ -1,9 +1,33 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
-  <PropertyGroup>
-    <TargetFramework>net7.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
-  </PropertyGroup>
+	<PropertyGroup>
+		<TargetFramework>net7.0</TargetFramework>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
+	</PropertyGroup>
+
+	<PropertyGroup>
+		<Authors>ErzhanKub</Authors>
+		<PackageId>Results.Management.System</PackageId>
+		<Title>Results.Management.System</Title>
+		<Description>Libary for custom Result objects.</Description>
+		<PackageTags>ResultsManagementSystem;result;results;ResultsManagement;rms</PackageTags>
+		<PackageProjectUrl>https://github.com/ErzhanKub/Results.Management.System.git</PackageProjectUrl>
+		<RepositoryUrl>https://github.com/ErzhanKub/Results.Management.System.git</RepositoryUrl>
+		<RepositoryType>git</RepositoryType>
+		<PackageLicenseExpression>MIT</PackageLicenseExpression>
+		<PackageIcon></PackageIcon>
+		<PackageReadmeFile>README.md</PackageReadmeFile>
+		
+		<AssemblyVersion>1.0.0</AssemblyVersion>
+		<FileVersion>1.0.0</FileVersion>
+		<Version>1.0.0</Version>
+	</PropertyGroup>
+
+	<ItemGroup>
+		<Content Include="../../README.md">
+			<CopyToOutputDirectory>Always</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>
 
 </Project>
