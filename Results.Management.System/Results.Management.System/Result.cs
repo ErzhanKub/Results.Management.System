@@ -1,4 +1,6 @@
 ﻿
+using Newtonsoft.Json;
+
 namespace Results.Management.System
 {
     public abstract class Result
@@ -8,12 +10,14 @@ namespace Results.Management.System
         public bool IsFailure => !IsSuccess;
         public List<Error> Errors { get; protected set; } = new();
 
-        public static Result<TValue> Ok<TValue>() => new();
-        public static Result<TValue> Ok<TValue>(TValue value) => new(value);
-        public static Result<TValue> Bad<TValue>(string message) => new(new Error(message));
-        public static Result<TValue> Bad<TValue>(string message, string code) => new(new Error(message, code));
-        public static Result<TValue> Bad<TValue>(Error error) => new(error);
-        public static Result<TValue> Bad<TValue>(List<Error> errors) => new(errors);
+        public static Result<TValue> Success<TValue>() => new();
+        public static Result<TValue> Success<TValue>(TValue value) => new(value);
+        public static Result<TValue> Warn<TValue>(string message) => new(new Error(message));
+        public static Result<TValue> Fail<TValue>(string message, string code) => new(new Error(message, code));
+        public static Result<TValue> Fail<TValue>(Error error) => new(error);
+        public static Result<TValue> Fail<TValue>(List<Error> errors) => new(errors);
+        public static Result<TValue> FromException<TValue>(Exception ex) => new(new Error(ex.Message));
+
     }
 
     public class Result<TValue> : Result
@@ -31,7 +35,7 @@ namespace Results.Management.System
         {
             IsSuccess = true;
             Value = value;
-            HasValue = false;
+            HasValue = true;
         }
 
         internal Result(Error error)
@@ -60,6 +64,121 @@ namespace Results.Management.System
             value = Value;
             errors = Errors;
         }
+
+        public List<Result<TValue>> FilterSuccessfulResults(List<Result<TValue>> results)
+        {
+            List<Result<TValue>> successfulResults = new();
+
+            foreach (var result in results)
+            {
+                if (result.IsSuccess)
+                {
+                    successfulResults.Add(result);
+                }
+            }
+            return successfulResults;
+        }
+
+        public List<Result<TValue>> FilterFailedResults(List<Result<TValue>> results)
+        {
+            List<Result<TValue>> failedResults = new();
+
+            foreach (var result in results)
+            {
+                if (result.IsFailure)
+                {
+                    failedResults.Add(result);
+                }
+            }
+            return failedResults;
+        }
+
+        public string ConvertResultToJson(Result<TValue> result)
+        {
+            var resultData = new
+            {
+                result.IsSuccess,
+                result.Value,
+                Errors = result.Errors.Select(error => new { error.Message, error.Code })
+            };
+
+            var jsonString = JsonConvert.SerializeObject(resultData);
+
+            return jsonString;
+        }
+
+        public void ClearErrors()
+        {
+            Errors.Clear();
+            IsSuccess = true;
+        }
+
+        public void AddErrors(List<Error> errors)
+        {
+            IsSuccess = false;
+            Errors.AddRange(errors);
+        }
+
+        public List<Error> GetErrorsWithCode(string code)
+        {
+            return Errors.Where(error => error.Code == code).ToList();
+        }
+
+        public void RemoveErrorsWithCode(string code)
+        {
+            Errors.RemoveAll(error => error.Code == code);
+            if (!Errors.Any())
+                IsSuccess = true;
+        }
+
+        public void ResetValue()
+        {
+            Value = default;
+            HasValue = false;
+        }
+
+        public Result<TNewValue> Map<TNewValue>(Func<TValue, TNewValue> transform)
+        {
+            if (IsSuccess)
+            {
+                return Success(transform(Value));
+            }
+            else
+            {
+                return Fail<TNewValue>(Errors);
+            }
+        }
+
+        public void OnSuccess(Action<TValue> action)
+        {
+            if (IsSuccess)
+            {
+                action(Value);
+            }
+        }
+
+        public void OnFailure(Action<List<Error>> action)
+        {
+            if (IsFailure)
+            {
+                action(Errors);
+            }
+        }
+
+        public Result<(TValue, TOther)> CombineWith<TOther>(Result<TOther> other)
+        {
+            if (IsSuccess && other.IsSuccess)
+            {
+                return Success((Value, other.Value));
+            }
+            else
+            {
+                var combinedErrors = new List<Error>(Errors);
+                combinedErrors.AddRange(other.Errors);
+                return Fail<(TValue, TOther)>(combinedErrors);
+            }
+        }
+
     }
 
     public class Error
